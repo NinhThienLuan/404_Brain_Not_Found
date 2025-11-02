@@ -45,6 +45,8 @@ def create_app() -> FastAPI:
             "endpoints": {
                 "generate": f"{env.PREFIX_API}/ai/generate",
                 "review": f"{env.PREFIX_API}/ai/review",
+                "parse_context": f"{env.PREFIX_API}/context/parse",
+                "classify_intent": f"{env.PREFIX_API}/intent/classify",
                 "health": f"{env.PREFIX_API}/ai/health",
                 "docs": f"{env.PREFIX_API}/docs",
                 "redoc": f"{env.PREFIX_API}/redoc"
