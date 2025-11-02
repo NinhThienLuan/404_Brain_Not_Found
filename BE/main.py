@@ -8,6 +8,7 @@ from BE.controller.code_generation_controller import router as code_gen_router
 from BE.controller.code_review_controller import router as code_review_router
 from BE.controller.execution_log_controller import router as exec_log_router
 from BE.controller.request_controller import router as request_router
+from BE.controller.chat_controller import router as chat_router
 
 # Tạo FastAPI app
 app = FastAPI(
@@ -21,6 +22,7 @@ app = FastAPI(
     - 🔍 **Code Review** - Automated code review & analysis
     - 📊 **Execution Logs** - Track code execution
     - 📝 **Request Management** - Manage user requests
+    - 💬 **Chat & Rooms** - Chat rooms and messaging system
     
     ## Entity-based Architecture:
     - Clean Architecture with Domain Entities
@@ -48,6 +50,7 @@ app.include_router(code_gen_router)
 app.include_router(code_review_router)
 app.include_router(exec_log_router)
 app.include_router(request_router)
+app.include_router(chat_router)
 
 
 @app.get("/")
@@ -62,7 +65,8 @@ async def root():
             "code_generations": "/api/code-generations",
             "code_reviews": "/api/code-reviews",
             "execution_logs": "/api/execution-logs",
-            "requests": "/api/requests"
+            "requests": "/api/requests",
+            "chat": "/api/chat"
         },
         "docs": "/docs",
         "redoc": "/redoc"
