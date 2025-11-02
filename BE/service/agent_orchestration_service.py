@@ -95,40 +95,116 @@ class AgentOrchestrationService:
             # Update session step
             self.session_repo.update_step(session_id, WorkflowStep.PARSING_CONTEXT)
             
-            # Parse context
-            parse_request = ContextParseRequest(
-                session_id=session_id,
-                context_text=context_text,
-                model=model
-            )
-            parse_response = self.context_parsing_service.parse_context(parse_request)
-            
-            if not parse_response.success:
+            # Parse context using ContextParsingService.extract_one_shot
+            # NOTE: ContextParsingService provides `extract_one_shot(user_context, model_name)` which
+            # returns (ok: bool, parsed_ctx: ParsedContextV2, err: Optional[str])
+            ok, parsed_ctx, err = self.context_parsing_service.extract_one_shot(context_text, model_name=model)
+
+            if not ok:
                 self.session_repo.update_step(session_id, WorkflowStep.ERROR)
                 return AgentResponse(
                     session_id=session_id,
                     current_step=WorkflowStep.ERROR.value,
                     success=False,
                     message="Failed to parse context",
-                    error_message=parse_response.error_message,
+                    error_message=err,
                     timestamp=datetime.now()
                 )
-            
+
+            # Convert parsed_ctx (ParsedContextV2) to plain JSON/dict for storage
+            parsed_json = parsed_ctx.dict() if hasattr(parsed_ctx, "dict") else parsed_ctx
+
             # Update session with parsed context
             session = self.session_repo.find_by_id(session_id)
             if session:
-                session.context_json = parse_response.parsed_json
-                session.current_step = WorkflowStep.IDLE
+                session.context_json = parsed_json
                 self.session_repo.update(session)
-            
-            return AgentResponse(
-                session_id=session_id,
-                current_step=WorkflowStep.IDLE.value,
-                context_json=parse_response.parsed_json,
-                success=True,
-                message=f"Context parsed successfully (confidence: {parse_response.confidence_score:.2f})",
-                timestamp=datetime.now()
-            )
+
+            # Immediately orchestrate to code generation if the parsed goal is to generate code
+            try:
+                # Update step
+                self.session_repo.update_step(session_id, WorkflowStep.GENERATING_CODE)
+
+                # Build a CodeGenerationRequest from parsed context
+                # For function generation, include purpose, inputs, core_logic, outputs
+                details = parsed_json.get("details", {}) if isinstance(parsed_json, dict) else {}
+                goal_type = parsed_json.get("goal_type") if isinstance(parsed_json, dict) else None
+
+                prompt_parts = []
+                if goal_type:
+                    prompt_parts.append(f"Goal: {goal_type}")
+
+                # Prefer human-readable purpose
+                purpose = details.get("purpose") or details.get("description") or "Please implement the requested functionality."
+                prompt_parts.append(f"Purpose: {purpose}")
+
+                if details.get("function_name"):
+                    prompt_parts.append(f"Function name: {details.get('function_name')}")
+
+                if details.get("inputs"):
+                    prompt_parts.append("Inputs:")
+                    for inp in details.get("inputs"):
+                        prompt_parts.append(f"- {inp}")
+
+                if details.get("core_logic"):
+                    prompt_parts.append("Core logic steps:")
+                    for step in details.get("core_logic"):
+                        prompt_parts.append(f"- {step}")
+
+                if details.get("outputs"):
+                    prompt_parts.append(f"Outputs: {details.get('outputs')}")
+
+                prompt = "\n".join(prompt_parts)
+
+                code_request = CodeGenerationRequest(
+                    prompt=prompt,
+                    language="python",
+                    additional_context=str(session.context_json) if session and session.context_json else None,
+                    model=model
+                )
+
+                code_response = self.code_gen_service.generate_code(code_request)
+
+                if not code_response.success:
+                    self.session_repo.update_step(session_id, WorkflowStep.ERROR)
+                    return AgentResponse(
+                        session_id=session_id,
+                        current_step=WorkflowStep.ERROR.value,
+                        success=False,
+                        message="Code generation failed",
+                        error_message=code_response.error_message,
+                        timestamp=datetime.now()
+                    )
+
+                # Save generated code to session history
+                if session:
+                    session.add_code_to_history(
+                        code=code_response.generated_code,
+                        language=code_response.language,
+                        description=purpose
+                    )
+                    session.current_step = WorkflowStep.COMPLETED
+                    self.session_repo.update(session)
+
+                return AgentResponse(
+                    session_id=session_id,
+                    current_step=WorkflowStep.COMPLETED.value,
+                    generated_code=code_response.generated_code,
+                    context_json=session.context_json if session else parsed_json,
+                    success=True,
+                    message="Context parsed and code generated successfully",
+                    timestamp=datetime.now()
+                )
+            except Exception as e:
+                self.session_repo.update_step(session_id, WorkflowStep.ERROR)
+                return AgentResponse(
+                    session_id=session_id,
+                    current_step=WorkflowStep.ERROR.value,
+                    success=False,
+                    message="Error during code generation orchestration",
+                    error_message=str(e),
+                    timestamp=datetime.now()
+                )
             
         except Exception as e:
             self.session_repo.update_step(session_id, WorkflowStep.ERROR)
