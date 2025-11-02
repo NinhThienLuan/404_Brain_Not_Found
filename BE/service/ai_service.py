@@ -13,36 +13,16 @@ from model.ai_models import (
 from repository.gemini_repo import GeminiRepository
 
 
-class CodeGenerationService:
-    """Service for code generation using AI"""
-    
+class CodeGenerationService:    
     def __init__(self, gemini_repo: Optional[GeminiRepository] = None):
-        """
-        Initialize code generation service
-        
-        Args:
-            gemini_repo: Optional GeminiRepository instance
-        """
         self.gemini_repo = gemini_repo or GeminiRepository()
     
     def generate_code(self, request: CodeGenerationRequest) -> CodeGenerationResponse:
-        """
-        Generate code based on request
-        
-        Args:
-            request: CodeGenerationRequest object
-            
-        Returns:
-            CodeGenerationResponse object
-        """
         try:
-            # Build comprehensive prompt
             prompt = self._build_generation_prompt(request)
             
-            # Call Gemini API with specified model
             response_text = self.gemini_repo.generate_code(prompt, model_name=request.model)
             
-            # Parse response
             generated_code, explanation = self._parse_generation_response(response_text)
             
             return CodeGenerationResponse(
