@@ -1,0 +1,126 @@
+/* Basic styles for chatbot component */
+.chatbot-root {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #fff;
+}
+
+.chatbot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  background: #0066cc;
+  color: white;
+}
+
+.chatbot-actions .btn {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  color: white;
+  padding: 6px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.chatbot-list {
+  height: 320px;
+  overflow: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #f9f9fb;
+}
+
+.chatbot-empty {
+  color: #666;
+  text-align: center;
+  margin-top: 30px;
+}
+
+.chatbot-msg {
+  max-width: 85%;
+  padding: 8px 10px;
+  border-radius: 8px;
+  box-shadow: 0 1px 0 rgba(0,0,0,0.03);
+}
+
+.chatbot-msg .meta {
+  font-size: 11px;
+  color: #666;
+  margin-bottom: 6px;
+}
+
+.chatbot-msg .text {
+  font-size: 14px;
+  color: #111;
+  white-space: pre-wrap;
+}
+
+.chatbot-msg.user {
+  align-self: flex-end;
+  background: linear-gradient(180deg,#e6f0ff,#d7e8ff);
+}
+
+.chatbot-msg.bot {
+  align-self: flex-start;
+  background: #fff;
+}
+
+.chatbot-msg.system {
+  align-self: center;
+  background: transparent;
+  color: #b33;
+}
+
+.chatbot-input {
+  display: flex;
+  gap: 8px;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  background: #fff;
+}
+
+.chatbot-input input {
+  flex: 1 1 auto;
+  padding: 8px 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  outline: none;
+}
+
+.chatbot-input input:focus {
+  border-color: #99c2ff;
+  box-shadow: 0 0 0 3px rgba(102,153,255,0.08);
+}
+
+.chatbot-input .btn {
+  padding: 8px 12px;
+  background: #0066cc;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn.small { padding: 6px 8px; font-size: 13px; }
+
+.chatbot-footer {
+  font-size: 12px;
+  color: #777;
+  padding: 6px 10px;
+  border-top: 1px solid #f0f0f0;
+  background: #fafafa;
+}
+
+@media (max-width: 520px) {
+  .chatbot-root { max-width: 100%; }
+  .chatbot-list { height: 260px; }
+}
