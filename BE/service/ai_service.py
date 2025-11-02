@@ -10,7 +10,7 @@ from model.ai_models import (
     CodeReviewResponse,
     ReviewIssue
 )
-from repo.gemini_repo import GeminiRepository
+from BE.repository.gemini_repo import GeminiRepository
 
 
 class CodeGenerationService:
@@ -39,8 +39,8 @@ class CodeGenerationService:
             # Build comprehensive prompt
             prompt = self._build_generation_prompt(request)
             
-            # Call Gemini API
-            response_text = self.gemini_repo.generate_code(prompt)
+            # Call Gemini API with specified model
+            response_text = self.gemini_repo.generate_code(prompt, model_name=request.model)
             
             # Parse response
             generated_code, explanation = self._parse_generation_response(response_text)
@@ -120,11 +120,12 @@ class CodeReviewService:
             CodeReviewResponse object
         """
         try:
-            # Call Gemini API for review
+            # Call Gemini API for review with specified model
             response_text = self.gemini_repo.review_code(
                 code=request.code,
                 language=request.language,
-                review_type=request.review_type
+                review_type=request.review_type,
+                model_name=request.model
             )
             
             # Parse review response

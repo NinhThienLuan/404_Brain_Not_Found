@@ -11,34 +11,17 @@ class GeminiRepository:
         self.gemini_client = gemini_ai
         self.model = self.gemini_client.model
     
-    def generate_code(self, prompt: str) -> str:
-        """
-        Generate code using Gemini API
-        
-        Args:
-            prompt: The prompt for code generation
-            
-        Returns:
-            Generated code as string
-        """
+    def generate_code(self, prompt: str, model_name: str = "gemini-2.5-flash") -> str:
         try:
-            response = self.model.generate_content(prompt)
+            # Get specific model if requested
+            model = self.gemini_client.get_model(model_name)
+            response = model.generate_content(prompt)
             return response.text
         except Exception as e:
             raise Exception(f"Error generating code: {str(e)}")
     
-    def review_code(self, code: str, language: str, review_type: str = "general") -> str:
-        """
-        Review code using Gemini API
-        
-        Args:
-            code: The code to review
-            language: Programming language
-            review_type: Type of review (general, security, performance, style)
-            
-        Returns:
-            Review result as string
-        """
+    def review_code(self, code: str, language: str, review_type: str = "general", model_name: str = "gemini-2.5-flash") -> str:
+
         try:
             prompt = f"""
             Please review the following {language} code with focus on {review_type} aspects:
@@ -54,21 +37,14 @@ class GeminiRepository:
             4. Summary of code quality
             """
             
-            response = self.model.generate_content(prompt)
+            # Get specific model if requested
+            model = self.gemini_client.get_model(model_name)
+            response = model.generate_content(prompt)
             return response.text
         except Exception as e:
             raise Exception(f"Error reviewing code: {str(e)}")
     
     def chat(self, prompt: str) -> str:
-        """
-        General chat with Gemini API
-        
-        Args:
-            prompt: The prompt/question
-            
-        Returns:
-            Response as string
-        """
         try:
             response = self.model.generate_content(prompt)
             return response.text
