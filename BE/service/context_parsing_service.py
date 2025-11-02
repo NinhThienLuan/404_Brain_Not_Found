@@ -6,8 +6,8 @@ import json
 import logging
 from typing import Optional, Dict, Any
 
-from model.intent_models import ParsedContextV2, GoalType
-from repository.gemini_repo import GeminiRepository
+from BE.model.intent_models import ParsedContextV2, GoalType
+from BE.repository.gemini_repo import GeminiRepository
 
 
 class ContextParsingService:
