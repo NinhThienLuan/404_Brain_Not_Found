@@ -10,12 +10,13 @@ class EnvironmentConfig:
     """Environment configuration similar to Node.js style"""
     
     def __init__(self):
-        self.PORT: int = int(os.getenv('APP_PORT', 5000))
+        # Support both PORT and APP_PORT for flexibility
+        self.PORT: int = int(os.getenv('APP_PORT')  or '8080')
         self.HOST: str = os.getenv('APP_HOST', 'localhost')
         self.DEBUG: bool = os.getenv('DEBUG', 'False').lower() == 'true'
         
-        # CORS Origins - split by comma and trim whitespace
-        cors_origins = os.getenv('CORS_ORIGINS', '*')
+        # CORS Origins - split by comma and trim whitespace (support both CORS_ORIGINS and CORS_ORIGIN)
+        cors_origins = os.getenv('CORS_ORIGINS') or os.getenv('CORS_ORIGIN') or '*'
         self.CORS_ORIGINS: List[str] = (
             [origin.strip() for origin in cors_origins.split(',')]
             if cors_origins else ['*']
