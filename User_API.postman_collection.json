@@ -1,0 +1,280 @@
+{
+	"info": {
+		"_postman_id": "404-brain-not-found-users",
+		"name": "User CRUD API - Hackathon",
+		"description": "Collection đầy đủ để test User CRUD API với MongoDB",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/",
+					"host": ["{{base_url}}"],
+					"path": [""]
+				},
+				"description": "Kiểm tra server có đang chạy không"
+			},
+			"response": []
+		},
+		{
+			"name": "1. Tạo User Mới",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"if (pm.response.code === 201) {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"user_id\", jsonData._id);",
+							"    pm.environment.set(\"user_email\", jsonData.email);",
+							"    console.log(\"Đã lưu user_id: \" + jsonData._id);",
+							"}"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Nguyễn Văn A\",\n  \"email\": \"nguyenvana@example.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/users/",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", ""]
+				},
+				"description": "Tạo user mới với name và email"
+			},
+			"response": []
+		},
+		{
+			"name": "2. Lấy Danh Sách Users",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/users/?page=1&page_size=10",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", ""],
+					"query": [
+						{
+							"key": "page",
+							"value": "1",
+							"description": "Số trang (bắt đầu từ 1)"
+						},
+						{
+							"key": "page_size",
+							"value": "10",
+							"description": "Số lượng users mỗi trang (tối đa 100)"
+						}
+					]
+				},
+				"description": "Lấy danh sách tất cả users với pagination"
+			},
+			"response": []
+		},
+		{
+			"name": "3. Lấy User Theo ID",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/users/{{user_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "{{user_id}}"]
+				},
+				"description": "Lấy thông tin chi tiết của 1 user theo ID"
+			},
+			"response": []
+		},
+		{
+			"name": "4. Lấy User Theo Email",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/users/email/{{user_email}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "email", "{{user_email}}"]
+				},
+				"description": "Lấy user theo địa chỉ email"
+			},
+			"response": []
+		},
+		{
+			"name": "5. Update User (PUT)",
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Nguyễn Văn A Updated\",\n  \"email\": \"updated@example.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/users/{{user_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "{{user_id}}"]
+				},
+				"description": "Update toàn bộ thông tin user"
+			},
+			"response": []
+		},
+		{
+			"name": "6. Update User (PATCH)",
+			"request": {
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Tên Mới\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/users/{{user_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "{{user_id}}"]
+				},
+				"description": "Partial update - chỉ update một số field"
+			},
+			"response": []
+		},
+		{
+			"name": "7. Xóa User",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/users/{{user_id}}",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "{{user_id}}"]
+				},
+				"description": "Xóa user khỏi database"
+			},
+			"response": []
+		},
+		{
+			"name": "Test - Tạo User Với Email Trùng",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"User Khác\",\n  \"email\": \"nguyenvana@example.com\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/users/",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", ""]
+				},
+				"description": "Test error case: email đã tồn tại (nên trả về 400 Bad Request)"
+			},
+			"response": []
+		},
+		{
+			"name": "Test - Lấy User Không Tồn Tại",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/users/invalid_id_12345",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", "invalid_id_12345"]
+				},
+				"description": "Test error case: user không tồn tại (nên trả về 404 Not Found)"
+			},
+			"response": []
+		},
+		{
+			"name": "Test - Tạo User Với Email Không Hợp Lệ",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"name\": \"Test User\",\n  \"email\": \"not-an-email\"\n}"
+				},
+				"url": {
+					"raw": "{{base_url}}/api/users/",
+					"host": ["{{base_url}}"],
+					"path": ["api", "users", ""]
+				},
+				"description": "Test validation: email không hợp lệ (nên trả về 422 Unprocessable Entity)"
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		},
+		{
+			"key": "user_id",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "user_email",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
+
