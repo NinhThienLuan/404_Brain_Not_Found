@@ -1,7 +1,10 @@
+<<<<<<< HEAD
+=======
 # Environment variables
 .env
 .env.local
 
+>>>>>>> d348210f6606a83ecf96c8b1a16a867f602c3bfc
 # Python
 __pycache__/
 *.py[cod]
@@ -20,29 +23,69 @@ parts/
 sdist/
 var/
 wheels/
+<<<<<<< HEAD
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+=======
+*.egg-info/
+.installed.cfg
+*.egg
+>>>>>>> d348210f6606a83ecf96c8b1a16a867f602c3bfc
 
 # Virtual Environment
 venv/
 env/
 ENV/
+<<<<<<< HEAD
+env.bak/
+venv.bak/
+
+# Environment Variables
+.env
+.env.local
+
+# IDE
+=======
 
 # IDEs
+>>>>>>> d348210f6606a83ecf96c8b1a16a867f602c3bfc
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
+<<<<<<< HEAD
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+
+=======
+>>>>>>> d348210f6606a83ecf96c8b1a16a867f602c3bfc
 # OS
 .DS_Store
 Thumbs.db
 
+<<<<<<< HEAD
+# Logs
+*.log
+logs/
+
+# Node modules (for FE)
+node_modules/
+package-lock.json
+yarn.lock
+=======
 # Node modules (nếu có frontend)
 node_modules/
 
 # Logs
 *.log
 
+>>>>>>> d348210f6606a83ecf96c8b1a16a867f602c3bfc
