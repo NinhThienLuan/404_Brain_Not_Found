@@ -75,14 +75,14 @@ app = create_app()
 
 if __name__ == '__main__':
     print("=" * 60)
-    print(f"🚀 Starting {env.APP_NAME}")
+    print(f" Starting {env.APP_NAME}")
     print("=" * 60)
-    print(f"🌐 Server URL: http://{env.HOST}:{env.PORT}")
-    print(f"📚 API Docs: http://{env.HOST}:{env.PORT}{env.PREFIX_API}/docs")
-    print(f"📖 ReDoc: http://{env.HOST}:{env.PORT}{env.PREFIX_API}/redoc")
-    print(f"📝 Debug mode: {env.DEBUG}")
-    print(f"🔑 API Key: {env.GEMINI_API_KEY[:8]}..." if env.GEMINI_API_KEY else "❌ No API Key")
-    print(f"🌍 CORS Origins: {', '.join(env.CORS_ORIGINS)}")
+    print(f"Server URL: http://{env.HOST}:{env.PORT}")
+    print(f"API Docs: http://{env.HOST}:{env.PORT}{env.PREFIX_API}/docs")
+    print(f"ReDoc: http://{env.HOST}:{env.PORT}{env.PREFIX_API}/redoc")
+    print(f"Debug mode: {env.DEBUG}")
+    print(f"API Key: {env.GEMINI_API_KEY[:8]}..." if env.GEMINI_API_KEY else "No API Key")
+    print(f"CORS Origins: {', '.join(env.CORS_ORIGINS)}")
     print("=" * 60)
     
     # Run with uvicorn
