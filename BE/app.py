@@ -4,6 +4,8 @@ from fastapi.responses import JSONResponse
 import uvicorn
 
 from controller.ai_controller import ai_router
+from controller.intent_controller import router as intent_router
+from controller.context_controller import context_router
 from utils.config import env
 
 
@@ -33,6 +35,8 @@ def create_app() -> FastAPI:
     
     # Include routers
     app.include_router(ai_router, prefix=env.PREFIX_API)
+    app.include_router(intent_router, prefix=env.PREFIX_API)
+    app.include_router(context_router, prefix=env.PREFIX_API)
     
     # Root endpoint
     @app.get("/", tags=["Root"])

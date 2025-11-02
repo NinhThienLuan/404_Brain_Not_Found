@@ -4,7 +4,7 @@ Pydantic models for context parsing
 """
 
 from pydantic import BaseModel, Field
-from typing import Optional, List
+from typing import Optional, List, Any
 
 
 class FunctionInput(BaseModel):
@@ -43,11 +43,11 @@ class ParsedContext(BaseModel):
 class ContextParsingRequest(BaseModel):
     """Request model for context parsing"""
     user_context: str = Field(..., description="User's context/requirement in natural language")
-    model: str = Field("gemini-1.5-flash", description="Gemini model to use")
+    model: str = Field("gemini-2.5-flash", description="Gemini model to use")
 
 
 class ContextParsingResponse(BaseModel):
     """Response model for context parsing"""
     success: bool
-    parsed_context: Optional[ParsedContext] = None
+    parsed_context: Optional[Any] = None  # ParsedContextV2 object
     error: Optional[str] = None

@@ -24,7 +24,7 @@ class GeminiAI:
         genai.configure(api_key=env.GEMINI_API_KEY)
         
         # Create default model
-        self._model = genai.GenerativeModel('gemini-pro')
+        self._model = genai.GenerativeModel('gemini-2.5-flash')
     
     @property
     def model(self):
@@ -32,30 +32,9 @@ class GeminiAI:
         return self._model
     
     def generate_content(self, prompt: str, **kwargs):
-        """
-        Generate content using Gemini
-        
-        Args:
-            prompt: The prompt text
-            **kwargs: Additional arguments for generate_content
-            
-        Returns:
-            Generated content response
-        """
         return self._model.generate_content(prompt, **kwargs)
     
-    def get_model(self, model_name: str = 'gemini-pro'):
-        """
-        Get a specific Gemini model
-        
-        Args:
-            model_name: Name of the model to use
-            
-        Returns:
-            GenerativeModel instance
-        """
+    def get_model(self, model_name: str = 'gemini-2.5-flash'):
         return genai.GenerativeModel(model_name)
-
-
 # Create and export singleton instance (similar to Node.js default export)
 gemini_ai = GeminiAI()

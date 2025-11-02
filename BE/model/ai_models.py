@@ -11,7 +11,7 @@ class CodeGenerationRequest(BaseModel):
     additional_context: Optional[str] = Field(default=None, description="Additional context or requirements")
     model: str = Field(
         default="gemini-2.5-flash",
-        description="Gemini model to use: gemini-pro, gemini-1.5-pro, gemini-1.5-flash, gemini-1.5-flash-8b"
+        description="Gemini model to use: gemini-2.5-flash, gemini-1.5-pro, gemini-1.5-flash"
     )
     
     model_config = {
@@ -44,8 +44,8 @@ class CodeReviewRequest(BaseModel):
     review_type: str = Field(default="general", description="Type of review: general, security, performance, style")
     additional_notes: Optional[str] = Field(default=None, description="Additional notes for the review")
     model: str = Field(
-        default="gemini-1.5-flash",
-        description="Gemini model to use: gemini-pro, gemini-1.5-pro, gemini-1.5-flash, gemini-1.5-flash-8b"
+        default="gemini-2.5-flash",
+        description="Gemini model to use: gemini-2.5-flash, gemini-1.5-pro, gemini-1.5-flash"
     )
     
     model_config = {
@@ -55,7 +55,7 @@ class CodeReviewRequest(BaseModel):
                 "language": "python",
                 "review_type": "performance",
                 "additional_notes": "Focus on optimization",
-                "model": "gemini-1.5-flash"
+                "model": "gemini-2.5-flash"
             }
         }
     }

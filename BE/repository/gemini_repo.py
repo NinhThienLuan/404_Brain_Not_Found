@@ -13,9 +13,21 @@ class GeminiRepository:
     
     def generate_code(self, prompt: str, model_name: str = "gemini-2.5-flash") -> str:
         try:
-            # Get specific model if requested
-            model = self.gemini_client.get_model(model_name)
+            # Get specific model if requested or use default
+            if model_name:
+                model = self.gemini_client.get_model(model_name)
+            else:
+                model = self.model
+            
             response = model.generate_content(prompt)
+            
+            # Check if response has text
+            if not response or not hasattr(response, 'text'):
+                raise Exception("No response received from Gemini")
+            
+            if not response.text:
+                raise Exception("Empty response from Gemini")
+            
             return response.text
         except Exception as e:
             raise Exception(f"Error generating code: {str(e)}")
