@@ -359,46 +359,6 @@ curl -X GET "http://localhost:8000/api/chat/messages/507f1f77bcf86cd799439020"
 
 ---
 
-## 🛠️ Integration với các module khác
-
-### Với AI Service (code generation/review)
-
-Khi AI service xử lý xong request của user, nó sẽ gọi:
-
-```python
-# Ví dụ code trong AI service
-POST /api/chat/messages
-{
-  "chat_room_id": "{room_id_from_request}",
-  "content": "{ai_response}",
-  "sender_type": "ai",
-  "metadata": {
-    "type": "code_generation", // hoặc "code_review"
-    "language": "python",
-    "code": "{generated_code}",
-    "review_score": 85 // nếu là review
-  }
-}
-```
-
-### Với Frontend
-
-Frontend cần:
-1. **Polling hoặc WebSocket** để nhận tin nhắn mới real-time
-2. **Local state management** để quản lý chat rooms và messages
-3. **Optimistic updates** để UX mượt mà hơn
-
----
-
-## 📝 Notes
-
-1. **Soft Delete**: Phòng chat không bị xóa vĩnh viễn, chỉ đánh dấu `is_active = false`
-2. **Pagination**: Dùng `skip` và `limit` để phân trang tin nhắn
-3. **Metadata**: Field linh hoạt để lưu thêm thông tin (code, language, score, etc.)
-4. **sender_type**: Chỉ có 2 giá trị: `"user"` hoặc `"ai"`
-
----
-
 ## 🚀 Quick Test
 
 Chạy server:
@@ -411,5 +371,3 @@ Truy cập docs:
 ```
 http://localhost:8000/docs
 ```
-
-Test các endpoints ngay trên Swagger UI! 🎉
