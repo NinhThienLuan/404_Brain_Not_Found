@@ -11,6 +11,8 @@ from BE.controller.request_controller import router as request_router
 from BE.controller.chat_room_controller import router as chat_room_router
 from BE.controller.message_controller import router as message_router
 from BE.controller.conservation_controller import router as conservation_router
+from BE.controller.ai_controller import ai_router
+from BE.controller.agent_controller import agent_router
 
 # Tạo FastAPI app
 app = FastAPI(
@@ -35,6 +37,9 @@ app = FastAPI(
     - RESTful API endpoints
     """,
     version="2.0.0",
+    title="Hackathon API - AI Agent Orchestration",
+    description="API cho dự án hackathon với AI Agent Orchestration, Code Generation và User Management",
+    version="2.0.0",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -57,6 +62,8 @@ app.include_router(code_review_router)
 app.include_router(exec_log_router)
 app.include_router(request_router)
 app.include_router(chat_room_router)
+app.include_router(ai_router)
+app.include_router(agent_router)
 
 
 @app.get("/")
@@ -78,6 +85,23 @@ async def root():
         },
         "docs": "/docs",
         "redoc": "/redoc"
+        "message": "Hackathon API đang chạy!",
+        "version": "2.0.0",
+        "docs": "/docs",
+        "features": [
+            "User Management (/api/users)",
+            "AI Code Generation (/ai)",
+            "Agent Orchestration (/agent)"
+        ],
+        "endpoints": {
+            "users": "/api/users",
+            "ai_generate": "/ai/generate",
+            "ai_review": "/ai/review",
+            "agent_session": "/agent/session/create",
+            "agent_parse_context": "/agent/context/parse",
+            "agent_process_prompt": "/agent/prompt/process",
+            "agent_analyze_code": "/agent/code/analyze"
+        }
     }
 
 
