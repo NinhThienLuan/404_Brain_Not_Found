@@ -4,8 +4,8 @@ Intent Controller - API cho Intent Classifier Service
 from fastapi import APIRouter, HTTPException
 from typing import Dict, Any
 
-from service.intent_classifier_service import IntentClassifierService
-from model.intent_models import IntentClassifierRequest, IntentClassifierResponse
+from BE.service.intent_classifier_service import IntentClassifierService
+from BE.model.intent_models import IntentClassifierRequest, IntentClassifierResponse
 
 
 # Create router
@@ -37,7 +37,7 @@ async def classify_intent(request: IntentClassifierRequest) -> IntentClassifierR
 @router.get("/health")
 async def health_check():
     """Health check endpoint"""
-    from model.intent_models import IntentType
+    from BE.model.intent_models import IntentType
     return {
         "status": "healthy",
         "service": "Intent Classifier Service",

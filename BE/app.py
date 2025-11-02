@@ -3,10 +3,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 import uvicorn
 
-from controller.ai_controller import ai_router
-from controller.intent_controller import router as intent_router
-from controller.context_controller import context_router
-from utils.config import env
+from BE.controller.ai_controller import ai_router
+from BE.controller.intent_controller import router as intent_router
+from BE.controller.context_controller import context_router
+from BE.utils.config import env
 
 
 def create_app() -> FastAPI:
@@ -93,7 +93,7 @@ if __name__ == '__main__':
     
     # Run with uvicorn
     uvicorn.run(
-        "app:app",
+        "BE.app:app",
         host=env.HOST,
         port=env.PORT,
         reload=env.DEBUG,

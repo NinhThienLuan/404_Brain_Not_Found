@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional, Tuple
 import json
 import re
 
-from model.intent_models import (
+from BE.model.intent_models import (
     IntentType,
     IntentClassifierRequest,
     IntentClassifierResponse,
@@ -161,7 +161,7 @@ class IntentClassifierService:
         # Simple mock logic
         if "tạo" in user_message.lower() or "create" in user_message.lower():
             # Mock a simple function context
-            from model.intent_models import GoalType, FunctionDetails
+            from BE.model.intent_models import GoalType, FunctionDetails
             return ParsedContextV2(
                 goal_type=GoalType.GENERATE_FUNCTION,
                 details={

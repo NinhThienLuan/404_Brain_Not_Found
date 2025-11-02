@@ -9,9 +9,9 @@ from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 
-from model.context_models import ContextParsingRequest, ContextParsingResponse
-from model.intent_models import ParsedContextV2
-from service.context_parsing_service import ContextParsingService
+from BE.model.context_models import ContextParsingRequest, ContextParsingResponse
+from BE.model.intent_models import ParsedContextV2
+from BE.service.context_parsing_service import ContextParsingService
 
 # Create router
 context_router = APIRouter(prefix="/context", tags=["Context Parsing"])

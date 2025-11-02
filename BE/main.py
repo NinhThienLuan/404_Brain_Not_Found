@@ -83,7 +83,7 @@ async def root():
             "messages": "/api/messages"
         },
         "docs": "/docs",
-        "redoc": "/redoc"
+        "redoc": "/redoc",
         "message": "Hackathon API đang chạy!",
         "version": "2.0.0",
         "docs": "/docs",

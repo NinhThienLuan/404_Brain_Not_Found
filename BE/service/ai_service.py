@@ -3,14 +3,14 @@ from typing import Optional
 import json
 import re
 
-from model.ai_models import (
+from BE.model.ai_models import (
     CodeGenerationRequest,
     CodeGenerationResponse,
     CodeReviewRequest,
     CodeReviewResponse,
     ReviewIssue
 )
-from repository.gemini_repo import GeminiRepository
+from BE.repository.gemini_repo import GeminiRepository
 
 
 class CodeGenerationService:
