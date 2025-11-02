@@ -3,7 +3,7 @@ from typing import Optional
 import json
 import re
 
-from BE.model.ai_models import (
+from model.ai_models import (
     CodeGenerationRequest,
     CodeGenerationResponse,
     CodeReviewRequest,

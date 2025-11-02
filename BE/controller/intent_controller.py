@@ -9,7 +9,7 @@ from model.intent_models import IntentClassifierRequest, IntentClassifierRespons
 
 
 # Create router
-router = APIRouter(prefix="/api/intent", tags=["Intent Classifier"])
+router = APIRouter(prefix="/intent", tags=["Intent Classifier"])
 
 # Initialize service
 intent_service = IntentClassifierService()

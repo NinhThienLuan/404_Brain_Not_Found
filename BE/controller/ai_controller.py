@@ -1,13 +1,13 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
 
-from BE.model.ai_models import (
+from model.ai_models import (
     CodeGenerationRequest, 
     CodeGenerationResponse,
     CodeReviewRequest,
     CodeReviewResponse
 )
-from BE.service.ai_service import CodeGenerationService, CodeReviewService
+from service.ai_service import CodeGenerationService, CodeReviewService
 
 
 # Create APIRouter (equivalent to Flask Blueprint)

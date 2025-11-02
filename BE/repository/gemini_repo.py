@@ -1,6 +1,6 @@
 from typing import Optional
-from BE.utils.gemini_client import gemini_ai
-from BE.utils.config import env
+from utils.gemini_client import gemini_ai
+from utils.config import env
 
 
 class GeminiRepository:
