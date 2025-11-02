@@ -1,9 +1,10 @@
 """
 CodeGeneration Controller - API endpoints
+Khớp với structure thực tế trong MongoDB
 """
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, List, Dict
 from BE.service.code_generation_service import CodeGenerationService
 from BE.entities.code_generation_entity import CodeGeneration
 
@@ -13,18 +14,15 @@ service = CodeGenerationService()
 
 # Request/Response Models
 class CodeGenerationCreateRequest(BaseModel):
-    prompt: str = Field(..., min_length=1)
-    language: str = Field(..., min_length=1)
-    generated_code: str
-    user_id: str
-    framework: Optional[str] = None
-    additional_context: Optional[str] = None
-    explanation: Optional[str] = None
-    model: str = "gemini-2.5-flash"
+    request_id: str = Field(..., description="ID của request")
+    files_json: List[Dict] = Field(default_factory=list, description="Array of generated files")
+    run_instructions: Optional[str] = Field(None, description="Instructions để chạy code")
+    status: str = Field("pending", description="Status: pending, success, error")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_code_generation(data: CodeGenerationCreateRequest):
+    """Tạo code generation mới"""
     try:
         entity = CodeGeneration(**data.dict())
         created = service.create(entity)
@@ -35,6 +33,7 @@ async def create_code_generation(data: CodeGenerationCreateRequest):
 
 @router.get("/{id}")
 async def get_code_generation(id: str):
+    """Lấy code generation theo ID"""
     entity = service.get_by_id(id)
     if not entity:
         raise HTTPException(status_code=404, detail="Code generation not found")
@@ -43,18 +42,20 @@ async def get_code_generation(id: str):
 
 @router.get("/")
 async def get_code_generations(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-    user_id: Optional[str] = None,
-    language: Optional[str] = None
+    page: int = Query(1, ge=1, description="Số trang"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    request_id: Optional[str] = Query(None, description="Filter by request_id"),
+    status_filter: Optional[str] = Query(None, alias="status", description="Filter by status")
 ):
+    """Lấy danh sách code generations"""
     try:
-        if user_id:
-            result = service.get_by_user(user_id, page, page_size)
-        elif language:
-            result = service.get_by_language(language, page, page_size)
-        else:
-            result = service.get_all(page, page_size)
+        filter_query = {}
+        if request_id:
+            filter_query["request_id"] = request_id
+        if status_filter:
+            filter_query["status"] = status_filter
+        
+        result = service.get_all(page, page_size, filter_query if filter_query else None)
         
         return {
             "items": [item.to_response() for item in result["items"]],
@@ -69,6 +70,7 @@ async def get_code_generations(
 
 @router.delete("/{id}")
 async def delete_code_generation(id: str):
+    """Xóa code generation"""
     try:
         success = service.delete(id)
         if not success:
@@ -78,4 +80,3 @@ async def delete_code_generation(id: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

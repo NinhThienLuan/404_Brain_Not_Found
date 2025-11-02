@@ -13,14 +13,14 @@ class CodeReviewService(BaseService[CodeReview]):
     def __init__(self):
         super().__init__(CodeReviewRepository())
     
-    def get_by_language(self, language: str, page: int = 1, page_size: int = 10) -> Dict:
-        """Lấy code reviews theo language"""
+    def get_by_gen_id(self, gen_id: str, page: int = 1, page_size: int = 10) -> Dict:
+        """Lấy code reviews theo gen_id"""
         page = max(1, page)
         page_size = max(1, min(100, page_size))
         skip = (page - 1) * page_size
         
-        items = self.repo.find_by_language(language, skip=skip, limit=page_size)
-        total = self.repo.count({"language": language})
+        items = self.repo.find_by_gen_id(gen_id, skip=skip, limit=page_size)
+        total = self.repo.count({"gen_id": gen_id})
         
         return {
             "items": items,
@@ -37,7 +37,7 @@ class CodeReviewService(BaseService[CodeReview]):
         skip = (page - 1) * page_size
         
         items = self.repo.find_by_score_range(min_score, max_score, skip=skip, limit=page_size)
-        total = self.repo.count({"overall_score": {"$gte": min_score, "$lte": max_score}})
+        total = self.repo.count({"score": {"$gte": min_score, "$lte": max_score}})
         
         return {
             "items": items,
@@ -46,4 +46,3 @@ class CodeReviewService(BaseService[CodeReview]):
             "page_size": page_size,
             "total_pages": (total + page_size - 1) // page_size
         }
-

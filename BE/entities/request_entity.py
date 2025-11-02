@@ -1,8 +1,9 @@
 """
 Request Entity - Đại diện cho user request
+Khớp với structure thực tế trong MongoDB
 """
 from datetime import datetime
-from typing import Optional, Dict
+from typing import Optional
 from dataclasses import dataclass
 from bson import ObjectId
 
@@ -12,42 +13,30 @@ class Request:
     """
     Request Entity - Domain model cho user requests
     """
-    request_type: str  # code_generation, code_review, execution
     user_id: str
-    status: str  # pending, processing, completed, failed
+    requirement_text: str
+    language: str
     id: Optional[str] = None
-    data: Optional[Dict] = None
-    result_id: Optional[str] = None  # ID of CodeGeneration/CodeReview/ExecutionLog
-    error_message: Optional[str] = None
     created_at: Optional[datetime] = None
-    updated_at: Optional[datetime] = None
     
     @staticmethod
     def from_dict(data: dict) -> 'Request':
         """Tạo Request entity từ dictionary"""
         return Request(
             id=str(data["_id"]) if "_id" in data else None,
-            request_type=data["request_type"],
-            user_id=data["user_id"],
-            status=data["status"],
-            data=data.get("data"),
-            result_id=data.get("result_id"),
-            error_message=data.get("error_message"),
-            created_at=data.get("created_at"),
-            updated_at=data.get("updated_at")
+            user_id=str(data["user_id"]) if isinstance(data.get("user_id"), ObjectId) else data.get("user_id", ""),
+            requirement_text=data.get("requirement_text", ""),
+            language=data.get("language", ""),
+            created_at=data.get("created_at")
         )
     
     def to_dict(self, include_id: bool = True) -> dict:
         """Chuyển Request entity thành dictionary"""
         result = {
-            "request_type": self.request_type,
-            "user_id": self.user_id,
-            "status": self.status,
-            "data": self.data,
-            "result_id": self.result_id,
-            "error_message": self.error_message,
-            "created_at": self.created_at or datetime.utcnow(),
-            "updated_at": self.updated_at or datetime.utcnow()
+            "user_id": ObjectId(self.user_id) if self.user_id else None,
+            "requirement_text": self.requirement_text,
+            "language": self.language,
+            "created_at": self.created_at or datetime.utcnow()
         }
         
         if include_id and self.id:
@@ -59,16 +48,11 @@ class Request:
         """Chuyển Request entity thành response dictionary"""
         return {
             "_id": self.id,
-            "request_type": self.request_type,
             "user_id": self.user_id,
-            "status": self.status,
-            "data": self.data,
-            "result_id": self.result_id,
-            "error_message": self.error_message,
-            "created_at": self.created_at.isoformat() if self.created_at else None,
-            "updated_at": self.updated_at.isoformat() if self.updated_at else None
+            "requirement_text": self.requirement_text,
+            "language": self.language,
+            "created_at": self.created_at.isoformat() if self.created_at else None
         }
     
     def __repr__(self) -> str:
-        return f"Request(id={self.id}, type={self.request_type}, status={self.status})"
-
+        return f"Request(id={self.id}, language={self.language}, user_id={self.user_id})"

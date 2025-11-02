@@ -1,9 +1,10 @@
 """
 CodeReview Entity - Đại diện cho code review result
+Khớp với structure thực tế trong MongoDB
 """
 from datetime import datetime
-from typing import Optional, List, Dict
-from dataclasses import dataclass, field
+from typing import Optional
+from dataclasses import dataclass
 from bson import ObjectId
 
 
@@ -12,19 +13,11 @@ class CodeReview:
     """
     CodeReview Entity - Domain model cho code review
     """
-    code: str
-    language: str
-    overall_score: float
-    user_id: str
+    gen_id: str
+    review_markdown: str
+    score: int  # 0-10
     id: Optional[str] = None
-    review_type: str = "general"
-    issues: List[Dict] = field(default_factory=list)
     summary: Optional[str] = None
-    improvements: List[str] = field(default_factory=list)
-    additional_notes: Optional[str] = None
-    model: str = "gemini-1.5-flash"
-    success: bool = True
-    error_message: Optional[str] = None
     created_at: Optional[datetime] = None
     
     @staticmethod
@@ -32,36 +25,20 @@ class CodeReview:
         """Tạo CodeReview entity từ dictionary"""
         return CodeReview(
             id=str(data["_id"]) if "_id" in data else None,
-            code=data["code"],
-            language=data["language"],
-            overall_score=data["overall_score"],
-            user_id=data["user_id"],
-            review_type=data.get("review_type", "general"),
-            issues=data.get("issues", []),
+            gen_id=str(data["gen_id"]) if isinstance(data.get("gen_id"), ObjectId) else data.get("gen_id", ""),
+            review_markdown=data.get("review_markdown", ""),
+            score=data.get("score", 0),
             summary=data.get("summary"),
-            improvements=data.get("improvements", []),
-            additional_notes=data.get("additional_notes"),
-            model=data.get("model", "gemini-1.5-flash"),
-            success=data.get("success", True),
-            error_message=data.get("error_message"),
             created_at=data.get("created_at")
         )
     
     def to_dict(self, include_id: bool = True) -> dict:
         """Chuyển CodeReview entity thành dictionary"""
         result = {
-            "code": self.code,
-            "language": self.language,
-            "overall_score": self.overall_score,
-            "user_id": self.user_id,
-            "review_type": self.review_type,
-            "issues": self.issues,
+            "gen_id": ObjectId(self.gen_id) if self.gen_id else None,
+            "review_markdown": self.review_markdown,
+            "score": self.score,
             "summary": self.summary,
-            "improvements": self.improvements,
-            "additional_notes": self.additional_notes,
-            "model": self.model,
-            "success": self.success,
-            "error_message": self.error_message,
             "created_at": self.created_at or datetime.utcnow()
         }
         
@@ -74,21 +51,12 @@ class CodeReview:
         """Chuyển CodeReview entity thành response dictionary"""
         return {
             "_id": self.id,
-            "code": self.code,
-            "language": self.language,
-            "overall_score": self.overall_score,
-            "user_id": self.user_id,
-            "review_type": self.review_type,
-            "issues": self.issues,
+            "gen_id": self.gen_id,
+            "review_markdown": self.review_markdown,
+            "score": self.score,
             "summary": self.summary,
-            "improvements": self.improvements,
-            "additional_notes": self.additional_notes,
-            "model": self.model,
-            "success": self.success,
-            "error_message": self.error_message,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
     
     def __repr__(self) -> str:
-        return f"CodeReview(id={self.id}, score={self.overall_score}, language={self.language})"
-
+        return f"CodeReview(id={self.id}, score={self.score}, gen_id={self.gen_id})"

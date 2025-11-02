@@ -1,9 +1,10 @@
 """
 CodeReview Controller - API endpoints
+Khớp với structure thực tế trong MongoDB
 """
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from typing import Optional, List, Dict
+from typing import Optional
 from BE.service.code_review_service import CodeReviewService
 from BE.entities.code_review_entity import CodeReview
 
@@ -13,20 +14,15 @@ service = CodeReviewService()
 
 # Request/Response Models
 class CodeReviewCreateRequest(BaseModel):
-    code: str = Field(..., min_length=1)
-    language: str = Field(..., min_length=1)
-    overall_score: float = Field(..., ge=0, le=10)
-    user_id: str
-    review_type: str = "general"
-    issues: List[Dict] = []
-    summary: Optional[str] = None
-    improvements: List[str] = []
-    additional_notes: Optional[str] = None
-    model: str = "gemini-1.5-flash"
+    gen_id: str = Field(..., description="ID của code generation")
+    review_markdown: str = Field(..., description="Review content in markdown")
+    score: int = Field(..., ge=0, le=10, description="Score từ 0-10")
+    summary: Optional[str] = Field(None, description="Summary của review")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_code_review(data: CodeReviewCreateRequest):
+    """Tạo code review mới"""
     try:
         entity = CodeReview(**data.dict())
         created = service.create(entity)
@@ -37,6 +33,7 @@ async def create_code_review(data: CodeReviewCreateRequest):
 
 @router.get("/{id}")
 async def get_code_review(id: str):
+    """Lấy code review theo ID"""
     entity = service.get_by_id(id)
     if not entity:
         raise HTTPException(status_code=404, detail="Code review not found")
@@ -45,20 +42,21 @@ async def get_code_review(id: str):
 
 @router.get("/")
 async def get_code_reviews(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-    user_id: Optional[str] = None,
-    language: Optional[str] = None,
-    min_score: Optional[float] = None,
-    max_score: Optional[float] = None
+    page: int = Query(1, ge=1, description="Số trang"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    gen_id: Optional[str] = Query(None, description="Filter by gen_id"),
+    min_score: Optional[int] = Query(None, ge=0, le=10, description="Minimum score"),
+    max_score: Optional[int] = Query(None, ge=0, le=10, description="Maximum score")
 ):
+    """Lấy danh sách code reviews"""
     try:
-        if user_id:
-            result = service.get_by_user(user_id, page, page_size)
-        elif language:
-            result = service.get_by_language(language, page, page_size)
-        elif min_score is not None and max_score is not None:
-            result = service.get_by_score_range(min_score, max_score, page, page_size)
+        filter_query = {}
+        if gen_id:
+            filter_query["gen_id"] = gen_id
+        if min_score is not None and max_score is not None:
+            result = service.get_by_score_range(float(min_score), float(max_score), page, page_size)
+        elif filter_query:
+            result = service.get_all(page, page_size, filter_query)
         else:
             result = service.get_all(page, page_size)
         
@@ -75,6 +73,7 @@ async def get_code_reviews(
 
 @router.delete("/{id}")
 async def delete_code_review(id: str):
+    """Xóa code review"""
     try:
         success = service.delete(id)
         if not success:
@@ -84,4 +83,3 @@ async def delete_code_review(id: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

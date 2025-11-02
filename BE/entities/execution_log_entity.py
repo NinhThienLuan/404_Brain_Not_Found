@@ -1,8 +1,9 @@
 """
 ExecutionLog Entity - Đại diện cho execution log
+Khớp với structure thực tế trong MongoDB
 """
 from datetime import datetime
-from typing import Optional
+from typing import Optional, Dict
 from dataclasses import dataclass
 from bson import ObjectId
 
@@ -12,15 +13,11 @@ class ExecutionLog:
     """
     ExecutionLog Entity - Domain model cho execution logs
     """
-    code: str
-    language: str
-    user_id: str
+    gen_id: str
+    compile_result: Dict
+    test_result: Dict
+    lint_result: Dict
     id: Optional[str] = None
-    output: Optional[str] = None
-    error: Optional[str] = None
-    execution_time: Optional[float] = None  # milliseconds
-    status: str = "pending"  # pending, success, error
-    code_generation_id: Optional[str] = None
     created_at: Optional[datetime] = None
     
     @staticmethod
@@ -28,28 +25,20 @@ class ExecutionLog:
         """Tạo ExecutionLog entity từ dictionary"""
         return ExecutionLog(
             id=str(data["_id"]) if "_id" in data else None,
-            code=data["code"],
-            language=data["language"],
-            user_id=data["user_id"],
-            output=data.get("output"),
-            error=data.get("error"),
-            execution_time=data.get("execution_time"),
-            status=data.get("status", "pending"),
-            code_generation_id=data.get("code_generation_id"),
+            gen_id=str(data["gen_id"]) if isinstance(data.get("gen_id"), ObjectId) else data.get("gen_id", ""),
+            compile_result=data.get("compile_result", {}),
+            test_result=data.get("test_result", {}),
+            lint_result=data.get("lint_result", {}),
             created_at=data.get("created_at")
         )
     
     def to_dict(self, include_id: bool = True) -> dict:
         """Chuyển ExecutionLog entity thành dictionary"""
         result = {
-            "code": self.code,
-            "language": self.language,
-            "user_id": self.user_id,
-            "output": self.output,
-            "error": self.error,
-            "execution_time": self.execution_time,
-            "status": self.status,
-            "code_generation_id": self.code_generation_id,
+            "gen_id": ObjectId(self.gen_id) if self.gen_id else None,
+            "compile_result": self.compile_result,
+            "test_result": self.test_result,
+            "lint_result": self.lint_result,
             "created_at": self.created_at or datetime.utcnow()
         }
         
@@ -62,17 +51,12 @@ class ExecutionLog:
         """Chuyển ExecutionLog entity thành response dictionary"""
         return {
             "_id": self.id,
-            "code": self.code,
-            "language": self.language,
-            "user_id": self.user_id,
-            "output": self.output,
-            "error": self.error,
-            "execution_time": self.execution_time,
-            "status": self.status,
-            "code_generation_id": self.code_generation_id,
+            "gen_id": self.gen_id,
+            "compile_result": self.compile_result,
+            "test_result": self.test_result,
+            "lint_result": self.lint_result,
             "created_at": self.created_at.isoformat() if self.created_at else None
         }
     
     def __repr__(self) -> str:
-        return f"ExecutionLog(id={self.id}, status={self.status}, language={self.language})"
-
+        return f"ExecutionLog(id={self.id}, gen_id={self.gen_id})"

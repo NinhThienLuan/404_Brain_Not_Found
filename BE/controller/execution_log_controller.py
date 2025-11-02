@@ -1,9 +1,10 @@
 """
 ExecutionLog Controller - API endpoints
+Khớp với structure thực tế trong MongoDB
 """
 from fastapi import APIRouter, HTTPException, Query, status
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import Optional, Dict
 from BE.service.execution_log_service import ExecutionLogService
 from BE.entities.execution_log_entity import ExecutionLog
 
@@ -13,18 +14,15 @@ service = ExecutionLogService()
 
 # Request/Response Models
 class ExecutionLogCreateRequest(BaseModel):
-    code: str = Field(..., min_length=1)
-    language: str = Field(..., min_length=1)
-    user_id: str
-    output: Optional[str] = None
-    error: Optional[str] = None
-    execution_time: Optional[float] = None
-    status: str = "pending"
-    code_generation_id: Optional[str] = None
+    gen_id: str = Field(..., description="ID của code generation")
+    compile_result: Dict = Field(..., description="Kết quả compile")
+    test_result: Dict = Field(..., description="Kết quả test")
+    lint_result: Dict = Field(..., description="Kết quả lint")
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
 async def create_execution_log(data: ExecutionLogCreateRequest):
+    """Tạo execution log mới"""
     try:
         entity = ExecutionLog(**data.dict())
         created = service.create(entity)
@@ -35,6 +33,7 @@ async def create_execution_log(data: ExecutionLogCreateRequest):
 
 @router.get("/{id}")
 async def get_execution_log(id: str):
+    """Lấy execution log theo ID"""
     entity = service.get_by_id(id)
     if not entity:
         raise HTTPException(status_code=404, detail="Execution log not found")
@@ -43,18 +42,17 @@ async def get_execution_log(id: str):
 
 @router.get("/")
 async def get_execution_logs(
-    page: int = Query(1, ge=1),
-    page_size: int = Query(10, ge=1, le=100),
-    user_id: Optional[str] = None,
-    status_filter: Optional[str] = Query(None, alias="status")
+    page: int = Query(1, ge=1, description="Số trang"),
+    page_size: int = Query(10, ge=1, le=100, description="Items per page"),
+    gen_id: Optional[str] = Query(None, description="Filter by gen_id")
 ):
+    """Lấy danh sách execution logs"""
     try:
-        if user_id:
-            result = service.get_by_user(user_id, page, page_size)
-        elif status_filter:
-            result = service.get_by_status(status_filter, page, page_size)
-        else:
-            result = service.get_all(page, page_size)
+        filter_query = {}
+        if gen_id:
+            filter_query["gen_id"] = gen_id
+        
+        result = service.get_all(page, page_size, filter_query if filter_query else None)
         
         return {
             "items": [item.to_response() for item in result["items"]],
@@ -69,6 +67,7 @@ async def get_execution_logs(
 
 @router.delete("/{id}")
 async def delete_execution_log(id: str):
+    """Xóa execution log"""
     try:
         success = service.delete(id)
         if not success:
@@ -78,4 +77,3 @@ async def delete_execution_log(id: str):
         raise HTTPException(status_code=404, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-

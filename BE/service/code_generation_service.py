@@ -13,14 +13,14 @@ class CodeGenerationService(BaseService[CodeGeneration]):
     def __init__(self):
         super().__init__(CodeGenerationRepository())
     
-    def get_by_language(self, language: str, page: int = 1, page_size: int = 10) -> Dict:
-        """Lấy code generations theo language"""
+    def get_by_request(self, request_id: str, page: int = 1, page_size: int = 10) -> Dict:
+        """Lấy code generations theo request_id"""
         page = max(1, page)
         page_size = max(1, min(100, page_size))
         skip = (page - 1) * page_size
         
-        items = self.repo.find_by_language(language, skip=skip, limit=page_size)
-        total = self.repo.count({"language": language})
+        items = self.repo.find_by_request(request_id, skip=skip, limit=page_size)
+        total = self.repo.count({"request_id": request_id})
         
         return {
             "items": items,
@@ -30,14 +30,14 @@ class CodeGenerationService(BaseService[CodeGeneration]):
             "total_pages": (total + page_size - 1) // page_size
         }
     
-    def get_successful(self, page: int = 1, page_size: int = 10) -> Dict:
-        """Lấy các code generation thành công"""
+    def get_by_status(self, status: str, page: int = 1, page_size: int = 10) -> Dict:
+        """Lấy code generations theo status"""
         page = max(1, page)
         page_size = max(1, min(100, page_size))
         skip = (page - 1) * page_size
         
-        items = self.repo.find_successful(skip=skip, limit=page_size)
-        total = self.repo.count({"success": True})
+        items = self.repo.find_by_status(status, skip=skip, limit=page_size)
+        total = self.repo.count({"status": status})
         
         return {
             "items": items,
@@ -46,4 +46,3 @@ class CodeGenerationService(BaseService[CodeGeneration]):
             "page_size": page_size,
             "total_pages": (total + page_size - 1) // page_size
         }
-
