@@ -68,4 +68,3 @@ class Message:
     
     def __repr__(self) -> str:
         return f"Message(id={self.id}, sender={self.sender}, conversation={self.conversation_id})"
-
