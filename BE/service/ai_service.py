@@ -10,7 +10,7 @@ from model.ai_models import (
     CodeReviewResponse,
     ReviewIssue
 )
-from BE.repository.gemini_repo import GeminiRepository
+from repository.gemini_repo import GeminiRepository
 
 
 class CodeGenerationService:
@@ -101,24 +101,9 @@ class CodeReviewService:
     """Service for code review using AI"""
     
     def __init__(self, gemini_repo: Optional[GeminiRepository] = None):
-        """
-        Initialize code review service
-        
-        Args:
-            gemini_repo: Optional GeminiRepository instance
-        """
         self.gemini_repo = gemini_repo or GeminiRepository()
     
     def review_code(self, request: CodeReviewRequest) -> CodeReviewResponse:
-        """
-        Review code based on request
-        
-        Args:
-            request: CodeReviewRequest object
-            
-        Returns:
-            CodeReviewResponse object
-        """
         try:
             # Call Gemini API for review with specified model
             response_text = self.gemini_repo.review_code(
