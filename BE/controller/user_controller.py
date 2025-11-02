@@ -10,19 +10,16 @@ from pydantic import BaseModel, EmailStr, Field
 
 # Request/Response Models
 class UserCreateRequest(BaseModel):
-    """Request body để tạo user mới"""
     name: str = Field(..., min_length=1, max_length=100, example="Nguyễn Văn A")
     email: EmailStr = Field(..., example="a@example.com")
 
 
 class UserUpdateRequest(BaseModel):
-    """Request body để update user"""
     name: Optional[str] = Field(None, min_length=1, max_length=100)
     email: Optional[EmailStr] = None
 
 
 class UserResponse(BaseModel):
-    """Response trả về cho client"""
     id: str = Field(..., alias="_id")
     name: str
     email: str
@@ -44,12 +41,6 @@ user_service = UserService()
 
 @router.post("/", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def create_user(user: UserCreateRequest):
-    """
-    Tạo user mới
-    
-    - **name**: Tên user (bắt buộc)
-    - **email**: Email user (bắt buộc, phải là email hợp lệ)
-    """
     try:
         created_user = user_service.create_user(
             name=user.name,
@@ -70,11 +61,7 @@ async def create_user(user: UserCreateRequest):
 
 @router.get("/{user_id}", response_model=UserResponse)
 async def get_user(user_id: str):
-    """
-    Lấy thông tin user theo ID
-    
-    - **user_id**: ID của user (trong URL)
-    """
+
     user = user_service.get_user_by_id(user_id)
     if not user:
         raise HTTPException(
@@ -89,23 +76,6 @@ async def get_users(
     page: int = Query(1, ge=1, description="Số trang (bắt đầu từ 1)"),
     page_size: int = Query(10, ge=1, le=100, description="Số lượng items mỗi trang")
 ):
-    """
-    Lấy danh sách users với pagination
-    
-    - **page**: Số trang (mặc định 1)
-    - **page_size**: Số lượng items mỗi trang (mặc định 10, tối đa 100)
-    
-    Returns:
-    ```json
-    {
-        "users": [...],
-        "total": 100,
-        "page": 1,
-        "page_size": 10,
-        "total_pages": 10
-    }
-    ```
-    """
     try:
         result = user_service.get_all_users(page=page, page_size=page_size)
         # Convert User entities to response dicts
@@ -125,11 +95,6 @@ async def get_users(
 
 @router.get("/email/{email}", response_model=UserResponse)
 async def get_user_by_email(email: str):
-    """
-    Lấy thông tin user theo email
-    
-    - **email**: Email của user
-    """
     user = user_service.get_user_by_email(email)
     if not user:
         raise HTTPException(
