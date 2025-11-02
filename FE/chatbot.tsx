@@ -2,22 +2,25 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import "./chatbot.css";
-import io, { Socket } from "socket.io-client";
 import axios from "axios";
 
+// Backend API URL
+const API_BASE_URL = "http://localhost:8000";
+
 type Conversation = {
-	_id: string;
+	id: string;
 	title: string;
+	createdAt: string;
 };
 
 type Message = {
-	_id?: string;
+	id: string;
 	text: string;
 	sender: "user" | "system";
+	timestamp: string;
 };
 
 export default function Chatbot() {
-	const [socket, setSocket] = useState<Socket | null>(null);
 	const [conversationId, setConversationId] = useState<string | null>(null);
 	const [currentTitle, setCurrentTitle] = useState<string | null>(null);
 	const [conversations, setConversations] = useState<Conversation[]>([]);
@@ -25,32 +28,40 @@ export default function Chatbot() {
 	const [msgInput, setMsgInput] = useState("");
 	const [isThinking, setIsThinking] = useState(false);
 	const [currentTheme, setCurrentTheme] = useState<"dark" | "light">("dark");
+	const [agentSessionId, setAgentSessionId] = useState<string | null>(null);
+	const [useAgentMode, setUseAgentMode] = useState(true);
 	const chatBoxRef = useRef<HTMLUListElement>(null);
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const messageInputRef = useRef<HTMLInputElement>(null);
 
-	// Initialize socket connection
+	// Load conversations from localStorage
 	useEffect(() => {
-		const newSocket = io("http://localhost:8080");
-		setSocket(newSocket);
+		loadConversationsFromStorage();
+	}, []);
 
-		newSocket.on("connect", () => {
-			console.log("✅ Socket connected:", newSocket.id);
-		});
-
-		newSocket.on("receive_message", (data: { text: string }) => {
-			console.log("📩 Tin nhắn từ server:", data.text);
-			setIsThinking(false);
-			addMessage(data.text, "system");
-		});
-
-		newSocket.on("error", (data: { message: string }) => {
-			console.log("❌ Lỗi từ server:", data.message);
-			alert(data.message);
-		});
-
-		return () => {
-			newSocket.close();
+	// Create Agent Session on mount
+	useEffect(() => {
+		const createAgentSession = async () => {
+			try {
+				const userId = localStorage.getItem("userId") || `user_${Date.now()}`;
+				localStorage.setItem("userId", userId);
+				
+				const response = await axios.post(`${API_BASE_URL}/agent/session/create`, {
+					user_id: userId,
+					metadata: { source: "frontend_chatbot" }
+				});
+				
+				setAgentSessionId(response.data.session_id);
+				console.log("✅ Agent session created:", response.data.session_id);
+			} catch (err) {
+				console.error("❌ Error creating agent session:", err);
+				setUseAgentMode(false); // Fallback to direct AI mode
+			}
 		};
+		
+		if (useAgentMode) {
+			createAgentSession();
+		}
 	}, []);
 
 	// Load theme from localStorage
@@ -62,11 +73,6 @@ export default function Chatbot() {
 		}
 	}, []);
 
-	// Load conversations on mount
-	useEffect(() => {
-		loadConversations();
-	}, []);
-
 	// Auto-scroll chat box
 	useEffect(() => {
 		if (chatBoxRef.current) {
@@ -74,57 +80,76 @@ export default function Chatbot() {
 		}
 	}, [messages, isThinking]);
 
-	const loadConversations = () => {
-		axios
-			.get("http://localhost:8080/api/conversations")
-			.then((res) => {
-				setConversations(res.data.data.conversations);
-			})
-			.catch((err) => {
-				console.error("❌ Lỗi tải conversations:", err);
-			});
+	// Save to localStorage whenever conversations or messages change
+	useEffect(() => {
+		if (conversations.length > 0) {
+			localStorage.setItem("conversations", JSON.stringify(conversations));
+		}
+	}, [conversations]);
+
+	useEffect(() => {
+		if (conversationId && messages.length > 0) {
+			localStorage.setItem(`messages_${conversationId}`, JSON.stringify(messages));
+		}
+	}, [messages, conversationId]);
+
+	const loadConversationsFromStorage = () => {
+		const saved = localStorage.getItem("conversations");
+		if (saved) {
+			try {
+				const parsed = JSON.parse(saved);
+				setConversations(parsed);
+			} catch (err) {
+				console.error("❌ Lỗi parse conversations:", err);
+				setConversations([]);
+			}
+		}
 	};
 
 	const selectConversation = (conv: Conversation) => {
-		setConversationId(conv._id);
+		setConversationId(conv.id);
 		setCurrentTitle(conv.title);
-		setMessages([]);
 
-		socket?.emit("join_room", conv._id);
-
-		// Load messages
-		axios
-			.get(`http://localhost:8080/api/messages/${conv._id}`)
-			.then((res) => {
-				setMessages(res.data.data.messages);
-			})
-			.catch((err) => {
-				console.error("Lỗi tải messages:", err);
-			});
+		// Load messages from localStorage
+		const savedMessages = localStorage.getItem(`messages_${conv.id}`);
+		if (savedMessages) {
+			try {
+				const parsed = JSON.parse(savedMessages);
+				setMessages(parsed);
+			} catch (err) {
+				console.error("❌ Lỗi parse messages:", err);
+				setMessages([]);
+			}
+		} else {
+			setMessages([]);
+		}
 	};
 
 	const createConversation = () => {
 		const title = prompt("Nhập tiêu đề cuộc trò chuyện:");
-		if (!title) return;
+		if (!title || !title.trim()) return;
 
-		axios
-			.post("http://localhost:8080/api/conversations", { title })
-			.then((res) => {
-				const { conversation } = res.data.data;
-				loadConversations();
-				selectConversation(conversation);
-			})
-			.catch((err) => {
-				console.error("❌ Lỗi tạo conversation:", err);
-				alert("Không thể tạo cuộc trò chuyện mới!");
-			});
+		const newConv: Conversation = {
+			id: `conv_${Date.now()}`,
+			title: title.trim(),
+			createdAt: new Date().toISOString(),
+		};
+
+		setConversations((prev) => [newConv, ...prev]);
+		selectConversation(newConv);
 	};
 
 	const addMessage = (text: string, sender: "user" | "system") => {
-		setMessages((prev) => [...prev, { text, sender }]);
+		const newMsg: Message = {
+			id: `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+			text,
+			sender,
+			timestamp: new Date().toISOString(),
+		};
+		setMessages((prev) => [...prev, newMsg]);
 	};
 
-	const sendMsg = () => {
+	const sendMsg = async () => {
 		const text = msgInput.trim();
 		if (!text) return;
 		if (!conversationId) {
@@ -132,11 +157,67 @@ export default function Chatbot() {
 			return;
 		}
 
+		// Add user message
 		addMessage(text, "user");
 		setMsgInput("");
 		setIsThinking(true);
 
-		socket?.emit("send_message", { conversationId, text });
+		try {
+			// Detect if text starts with /context command
+			if (text.toLowerCase().startsWith("/context ")) {
+				// Parse context mode (F1)
+				await parseContext(text.substring(9));
+				return;
+			} else if (text.toLowerCase() === "/analyze") {
+				// Analyze code mode (F3)
+				await analyzeCode();
+				return;
+			}
+
+			// Use Agent Orchestration if available, otherwise fallback to direct AI
+			if (useAgentMode && agentSessionId) {
+				// Call Agent Orchestration API (F2)
+				const userId = localStorage.getItem("userId") || "user_default";
+				const response = await axios.post(`${API_BASE_URL}/agent/prompt/process`, {
+					session_id: agentSessionId,
+					user_id: userId,
+					prompt: text,
+					model: "gemini-2.5-flash",
+				});
+
+				if (response.data.success) {
+					const intent = response.data.intent ? `🎯 Intent: ${response.data.intent}\n\n` : "";
+					const aiResponse = `${intent}${response.data.generated_code ? `\`\`\`python\n${response.data.generated_code}\n\`\`\`` : response.data.message}`;
+					addMessage(aiResponse, "system");
+				} else {
+					addMessage(`Lỗi: ${response.data.error_message}`, "system");
+				}
+			} else {
+				// Fallback: Direct AI API
+				const response = await axios.post(`${API_BASE_URL}/ai/generate`, {
+					prompt: text,
+					language: "python",
+					model: "gemini-2.5-flash",
+				});
+
+				if (response.data.success) {
+					const aiResponse = `${response.data.explanation}\n\n\`\`\`${response.data.language}\n${response.data.generated_code}\n\`\`\``;
+					addMessage(aiResponse, "system");
+				} else {
+					addMessage(`Lỗi: ${response.data.error_message}`, "system");
+				}
+			}
+		} catch (err: any) {
+			console.error("❌ Lỗi gọi AI API:", err);
+			const errorMsg = err.response?.data?.detail || err.message || "Không rõ lỗi";
+			addMessage(`❌ Không thể kết nối đến AI: ${errorMsg}`, "system");
+		} finally {
+			setIsThinking(false);
+			// Focus lại vào input sau khi gửi
+			setTimeout(() => {
+				messageInputRef.current?.focus();
+			}, 100);
+		}
 	};
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -153,6 +234,68 @@ export default function Chatbot() {
 		localStorage.setItem("theme", newTheme);
 	};
 
+	const parseContext = async (contextText: string) => {
+		if (!agentSessionId) {
+			addMessage("❌ Agent session chưa sẵn sàng!", "system");
+			setIsThinking(false);
+			return;
+		}
+
+		try {
+			const response = await axios.post(
+				`${API_BASE_URL}/agent/context/parse`,
+				null,
+				{
+					params: {
+						session_id: agentSessionId,
+						context_text: contextText,
+						model: "gemini-2.5-flash"
+					}
+				}
+			);
+
+			if (response.data.success) {
+				const parsedJson = JSON.stringify(response.data.context_json, null, 2);
+				const result = `✅ Context parsed! (Confidence: ${(response.data.confidence_score || 0) * 100}%)\n\n\`\`\`json\n${parsedJson}\n\`\`\``;
+				addMessage(result, "system");
+			} else {
+				addMessage(`❌ Parse failed: ${response.data.error_message}`, "system");
+			}
+		} catch (err: any) {
+			console.error("❌ Error parsing context:", err);
+			addMessage(`❌ Error: ${err.message}`, "system");
+		} finally {
+			setIsThinking(false);
+		}
+	};
+
+	const analyzeCode = async () => {
+		if (!agentSessionId) {
+			addMessage("❌ Agent session chưa sẵn sàng!", "system");
+			setIsThinking(false);
+			return;
+		}
+
+		try {
+			const response = await axios.post(
+				`${API_BASE_URL}/agent/code/analyze`,
+				null,
+				{ params: { session_id: agentSessionId } }
+			);
+
+			if (response.data.success) {
+				addMessage(`📊 Code Analysis:\n\n${response.data.code_analysis}`, "system");
+			} else {
+				addMessage(`❌ Analysis failed: ${response.data.error_message}`, "system");
+			}
+		} catch (err: any) {
+			console.error("❌ Error analyzing code:", err);
+			addMessage(`❌ Error: ${err.message}`, "system");
+		} finally {
+			setIsThinking(false);
+		}
+	};
+
 	const handleFileImport = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const file = e.target.files?.[0];
 		if (!file) return;
@@ -165,21 +308,60 @@ export default function Chatbot() {
 		reader.readAsText(file);
 	};
 
-	const handleFigmaButton = async () => {
+	const handleCodeReview = async () => {
 		if (!conversationId) {
-			alert("Vui lòng chọn một cuộc trò chuyện trước!");
+			alert("❌ Vui lòng chọn một cuộc trò chuyện trước!");
 			return;
 		}
 
+		const code = prompt("Nhập code để review:");
+		if (!code || !code.trim()) return;
+
+		const language = prompt("Nhập ngôn ngữ (python/javascript/java/...):", "python");
+		if (!language) return;
+
+		setIsThinking(true);
+		addMessage(`Review code:\n\`\`\`${language}\n${code}\n\`\`\``, "user");
+
 		try {
-			const res = await axios.post(
-				`http://localhost:8080/api/conversations/${conversationId}/figma-layout`
-			);
-			console.log("🎨 Figma layout response:", res.data);
-			alert("Layout Figma đã được tạo thành công! Kiểm tra console để xem JSON layout.");
-		} catch (err) {
-			console.error("Lỗi khi tạo layout Figma:", err);
-			alert("⚠️Không thể tạo layout Figma!");
+			const response = await axios.post(`${API_BASE_URL}/ai/review`, {
+				code: code,
+				language: language,
+				review_type: "general",
+				model: "gemini-1.5-flash",
+			});
+
+			if (response.data.success) {
+				const review = response.data;
+				let reviewText = `📊 **Code Review Result**\n\n`;
+				reviewText += `**Score**: ${review.overall_score}/10\n\n`;
+				reviewText += `**Summary**: ${review.summary}\n\n`;
+				
+				if (review.issues && review.issues.length > 0) {
+					reviewText += `**Issues Found**:\n`;
+					review.issues.forEach((issue: any, idx: number) => {
+						reviewText += `${idx + 1}. [${issue.severity.toUpperCase()}] ${issue.description}\n`;
+						reviewText += `   💡 Suggestion: ${issue.suggestion}\n\n`;
+					});
+				}
+
+				if (review.improvements && review.improvements.length > 0) {
+					reviewText += `**Improvements**:\n`;
+					review.improvements.forEach((imp: string, idx: number) => {
+						reviewText += `${idx + 1}. ${imp}\n`;
+					});
+				}
+
+				addMessage(reviewText, "system");
+			} else {
+				addMessage(`Lỗi: ${response.data.error_message}`, "system");
+			}
+		} catch (err: any) {
+			console.error("❌ Lỗi review code:", err);
+			const errorMsg = err.response?.data?.detail || err.message || "Không rõ lỗi";
+			addMessage(`❌ Không thể review code: ${errorMsg}`, "system");
+		} finally {
+			setIsThinking(false);
 		}
 	};
 
@@ -223,17 +405,23 @@ export default function Chatbot() {
 						New Chat
 					</button>
 					<div className="conversation-list">
+						{conversations.length === 0 && (
+							<div style={{ padding: "20px", textAlign: "center", color: "#888" }}>
+								Chưa có cuộc trò chuyện nào. <br />
+								Bấm "New Chat" để bắt đầu!
+							</div>
+						)}
 						{conversations.map((conv) => (
 							<div
-								key={conv._id}
-								className={`conversation-item ${conversationId === conv._id ? "active" : ""}`}
+								key={conv.id}
+								className={`conversation-item ${conversationId === conv.id ? "active" : ""}`}
 								onClick={() => selectConversation(conv)}
 							>
 								{conv.title}
 							</div>
 						))}
 					</div>
-				</div>
+			</div>
 
 				{/* Chat Area */}
 				<div className="chat-area">
@@ -241,32 +429,70 @@ export default function Chatbot() {
 						<span id="chatTitle">
 							{currentTitle || "Select a chat or create a new chat to begin"}
 						</span>
-						<div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-							{conversationId && (
-								<button id="figmaBtn" onClick={handleFigmaButton}>
-									Generate Layout
+						<div style={{ display: "flex", gap: "10px", alignItems: "center", marginLeft: "auto" }}>
+							{conversationId && agentSessionId && (
+								<button id="figmaBtn" onClick={() => analyzeCode()}>
+									📊 Analyze Code
 								</button>
 							)}
+							{conversationId && (
+								<button 
+									id="figmaBtn" 
+									onClick={handleCodeReview}
+									style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}
+								>
+									🔍 Review Code
+								</button>
+							)}
+							<button id="themeToggle" onClick={toggleTheme}>
+								{currentTheme === "dark" ? "🌙 Dark" : "☀️ Light"}
+							</button>
 						</div>
-						<button id="themeToggle" onClick={toggleTheme}>
-							{currentTheme === "dark" ? "🌙 Dark" : "☀️ Light"}
-						</button>
 					</div>
 
 					<ul id="chat" className="chat-box" ref={chatBoxRef}>
-						{messages.map((m, idx) => (
-							<li
-								key={idx}
-								className={m.sender}
-								dangerouslySetInnerHTML={
-									m.sender === "system"
-										? { __html: formatMessage(m.text) }
-										: undefined
-								}
-							>
-								{m.sender !== "system" && m.text}
-							</li>
-						))}
+						{messages.length === 0 && conversationId && (
+							<div className="chatbot-empty" style={{ 
+								textAlign: "center", 
+								padding: "40px 20px", 
+								color: "#888",
+								fontSize: "14px",
+								lineHeight: "1.8"
+							}}>
+								{agentSessionId ? (
+									<>
+										🤖 <strong>AI Agent Mode</strong> đã kích hoạt! <br /><br />
+										💬 <strong>Gõ prompt</strong> để generate code<br />
+										📝 <strong>/context &lt;text&gt;</strong> để parse context<br />
+										📊 <strong>/analyze</strong> để phân tích code<br />
+										🔍 Hoặc click <strong>Review Code</strong> để review<br /><br />
+										<small style={{ color: "#666" }}>Session: {agentSessionId.substring(0, 8)}...</small>
+									</>
+								) : (
+									<>
+										👋 Xin chào! Tôi là AI Code Assistant. <br />
+										Hãy hỏi tôi bất cứ điều gì về lập trình!
+									</>
+								)}
+							</div>
+						)}
+						{messages.map((m) => {
+						if (m.sender === "system") {
+							return (
+								<li
+									key={m.id}
+									className={m.sender}
+									dangerouslySetInnerHTML={{ __html: formatMessage(m.text) }}
+								/>
+							);
+						} else {
+							return (
+								<li key={m.id} className={m.sender}>
+									{m.text}
+								</li>
+							);
+						}
+					})}
 						{isThinking && (
 							<li className="system thinking-message">
 								<span>🤖 AI đang suy nghĩ</span>
@@ -274,7 +500,7 @@ export default function Chatbot() {
 									<span></span>
 									<span></span>
 									<span></span>
-								</div>
+			</div>
 							</li>
 						)}
 					</ul>
@@ -290,16 +516,24 @@ export default function Chatbot() {
 						<button className="import-btn" onClick={() => fileInputRef.current?.click()}>
 							➕ Import
 						</button>
-						<input
+				<input
 							id="msg"
+							ref={messageInputRef}
 							type="text"
-							placeholder="Type your message..."
+							placeholder="Ask AI to generate code..."
 							value={msgInput}
 							onChange={(e) => setMsgInput(e.target.value)}
-							onKeyDown={handleKeyDown}
+					onKeyDown={handleKeyDown}
 							disabled={!conversationId}
+							autoComplete="off"
 						/>
-						<button onClick={sendMsg}>➤ Send</button>
+						<button 
+							onClick={sendMsg}
+							disabled={!conversationId || isThinking || msgInput.trim() === ""}
+							title={!conversationId ? "Hãy chọn conversation trước" : "Gửi tin nhắn (hoặc bấm Enter)"}
+						>
+							➤ Send
+				</button>
 					</div>
 				</div>
 			</div>

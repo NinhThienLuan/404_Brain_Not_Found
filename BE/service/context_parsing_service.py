@@ -1,4 +1,4 @@
-﻿"""
+"""
 Context Parsing Service (Service 1)
 """
 

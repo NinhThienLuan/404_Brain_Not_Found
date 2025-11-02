@@ -1,6 +1,6 @@
 import google.generativeai as genai
 from typing import Optional
-from utils.config import env
+from BE.utils.config import env
 
 
 class GeminiAI:
